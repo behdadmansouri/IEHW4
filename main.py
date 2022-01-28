@@ -163,24 +163,25 @@ def user_vote(role):
         return make_response({'message': 'internal server error'}, 500)
 
 
-@app.route("/comments/<movie_id>", methods=['GET'])
-def comments(movie_id):
-    try:
-        args = request.args
-        movie_id = args.get('movie_id')
-        if movie_id is not None and type(movie_id) == int:
-            query = 'SELECT C.ID, U.USERNAME, C.COMMENT ' \
-                    'FROM COMMENTS AS C AND USER AS U AND MOVIE AS M ' \
-                    'WHERE C.USER_ID=U.ID AND M.ID=C.MOVIE_ID ' \
-                    'AND M.ID=%i AND C.APPROVED=1;' % movie_id  # TODO use _Join_ instead of _Where_
-            comment_list = []
-            for row in db_query(query):
-                comment_list.append({'author': row[0], 'body': row[1]})
+@app.route("/comments", methods=['GET'])
+def comments():
+    # try:
+    args = request.args
+    movie_id = args.get('movie_id')
+    if movie_id:
+        query = 'SELECT C.ID, U.USERNAME, C.COMMENT ' \
+                'FROM COMMENTS AS C, USER AS U, MOVIE AS M ' \
+                'WHERE C.USER_ID=U.ID AND M.ID=C.MOVIE_ID ' \
+                'AND M.ID=%i AND C.APPROVED=1;' % int(movie_id)  # TODO use _Join_ instead of _Where_
+        comment_list = []
+        for row in db_query(query):
+            comment_list.append({'author': row[0], 'body': row[1]})
 
-            return make_response(comment_list, 200)
-    except Exception:
-        return make_response({'message': 'internal server error'}, 500)
-
+        return make_response(jsonify({'comment_list': comment_list}), 200)
+    else:
+        return make_response({'message': 'Bad Request'}, 400)
+    # except Exception:
+    #     return make_response({'message': 'internal server error'}, 500)
 
 @app.route("/movies", methods=['GET'])
 def public_list_movies():
@@ -198,7 +199,7 @@ def public_list_movies():
 @app.route("/movie/<movie_id>", methods=['GET'])
 def public_movie(movie_id):
     try:
-        query = ('SELECT ID, NAME, DESCRIPTION, RATING FROM MOVIE WHERE id=%i' % movie_id)
+        query = ('SELECT ID, NAME, DESCRIPTION, RATING FROM MOVIE WHERE id=%i' % int(movie_id))
         movie_info = {}
         for row in db_query(query):
             movie_info = {'id': row[0], 'name': row[1], 'description': row[2], 'rating': row[3]}
