@@ -1,7 +1,6 @@
 import jwt
 import sqlite3
 from functools import wraps
-
 from flask import Flask, request, jsonify, make_response
 
 app = Flask(__name__)
@@ -47,24 +46,24 @@ def token_required(f):
 @app.route("/admin/movie", methods=['POST'])
 @token_required
 def admin_movie_insert(role):
-    # try:
-    if role < 1:
-        return make_response({'message': 'Not Authorized'}, 401)
-    content = request.json
-    name = content.get('name')
-    description = content.get('description')
-    if (name is not None and description is not None and
-            type(name) == str and type(description) == str):
-        db_query('INSERT INTO MOVIE (NAME DESCRIPTION) VALUES ("%s", "%s")' % (name, description))
+    try:
+        if role < 1:
+            return make_response({'message': 'Not Authorized'}, 401)
+        content = request.json
+        name = content.get('name')
+        description = content.get('description')
+        if (name is not None and description is not None and
+                type(name) == str and type(description) == str):
+            db_query('INSERT INTO MOVIE (NAME, DESCRIPTION) VALUES ("%s", "%s")' % (name, description))
 
-    # Bad Request
-    else:
-        return make_response({'message': 'Bad Request'}, 400)
+        # Bad Request
+        else:
+            return make_response({'message': 'Bad Request'}, 400)
 
-    # SUCCESS
-    return make_response({'message': 'ok'}, 204)
-    # except Exception:
-    #     return make_response({'message': 'internal server error'}, 500)
+        # SUCCESS
+        return make_response({'message': 'ok'}, 204)
+    except Exception:
+        return make_response({'message': 'internal server error'}, 500)
 
 
 @app.route("/admin/movie/<movie_id>", methods=['PUT', 'DELETE'])
@@ -173,10 +172,10 @@ def comments():
             query = 'SELECT C.ID, U.USERNAME, C.COMMENT ' \
                     'FROM COMMENTS AS C, USER AS U, MOVIE AS M ' \
                     'WHERE C.USER_ID=U.ID AND M.ID=C.MOVIE_ID ' \
-                    'AND M.ID=%i AND C.APPROVED=TRUE;' % int(movie_id)  # TODO use _Join_ instead of _Where_
+                    'AND M.ID=%i AND C.APPROVED=TRUE;' % int(movie_id)
             comment_list = []
             for row in db_query(query):
-                comment_list.append({'author': row[0], 'author': row[1], 'the comment': row[2]})
+                comment_list.append({'author': row[1], 'the comment': row[2]})
 
             return make_response(jsonify({'comment_list': comment_list}), 200)
         else:
